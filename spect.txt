@@ -1,0 +1,37 @@
+resource patient(hospital_id, disease_type0); 
+resource r2.(f1, f2, f3);
+resource R = {r1, r2};
+
+actor a1 {
+    uses: r1.(f1, f2, f4), r2.(f3, f7,f5);
+}    
+
+actor a2 {
+    uses: r2.(f3, f1, f8, f6);
+    dept: oncology;
+}
+
+actor a3 {
+    uses: r4.f1;
+    uses: r2.f8;
+    dept: medicine;
+}
+
+actor A= {a1, a2};
+
+policy p1:
+    allow a1, a3 access r1.(f1, f3);
+    allow a2 access r2.*;
+    allow a3 access r1.f1, r2.f3;
+    allow A access r2.f1;
+
+policy p2:
+    all a:actor. a.dept=oncology -> allow a access r2;
+
+policy p3:
+    exists a in G:actor. a.dept=oncology -> allow G access r2.f;
+policy p4:
+    all a in G:actor. a.dept=oncology -> allow G access R;
+
+policy blacklist:
+    exists a in G.actor. a.dept=general -> !allow G access patient.(id) 
