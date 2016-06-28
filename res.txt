@@ -1,0 +1,2 @@
+resource r2(f1,f2,f3);
+resource R={r1,r2};
