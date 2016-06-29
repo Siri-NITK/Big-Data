@@ -16,8 +16,8 @@ resource_def::= resource <id> ( <id_list> )
 actor_def::= actor <id> { <actor_list> }
 	    | actor <id> =  { <actor_idlist> }
 
-<actor_list>::= <label>:<value>;
-	       | <label>:<value>;<actor_list>
+<actor_list>::= <id>:<value>;
+	       | <id>:<value>;<actor_list>
 
 policy_def::= policy <id>:<policy_def_body>
 

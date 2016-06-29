@@ -1,6 +1,10 @@
 #
 #resource r2(f1,f2,f3);
 #resource R={r1,r2};
+#actor a1 
+#   {
+#    uses: r1.(f1, f2, f4), r2.(f3, f7,f5);
+#   }
 #
 #            ****Grammar**** 
 #resource_def::= resource <id> ( <id_list> )
@@ -22,19 +26,24 @@ class lexer(object):
 	def __init__(self):
 		print "***************************************************"
 		self.f = open(sys.argv[1], 'r')
-		self.p()
+		self.start()
 
 	def eat_whitespace(self):
 		char =self.f.read(1)
 		if(char==" "):
 			print "eat white space"
 			while(self.f.read(1)==" "):
-				print "skip"
+				print "skip space"
 			self.f.seek(-1,1)
+			self.eat_whitespace()
 		elif(char=="\n"):
+			print "skip line"
 			self.line_count+=1
+			self.eat_whitespace()
 		else:
-			self.f.seek(-1,1)	
+			self.f.seek(-1,1)
+		
+		
 		
 	def lex(self):
 	
@@ -84,7 +93,95 @@ class lexer(object):
 		if(char=="="):
 			return "equals"
 
-	def p(self):
+	def start(self):
+		tok=self.lex()
+		print tok
+		if(tok!="resource" and tok!="actor"):
+			print "Start line %d with resource." %self.line_count
+			sys.exit(0)
+
+		if(tok=="resource"):
+			self.f.seek(-len("resource"),1)
+			self.resource_def()
+		else:
+			self.actor_def()
+
+		print "Parsed successfully :D"
+
+		
+
+	def actor_def(self):
+		tok=self.lex()
+		print tok
+		if(tok!="actor"):
+			print "Start line %d with resource." %self.line_count
+			sys.exit(0)
+		#################################
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-iden"			
+			sys.exit(0)
+		#################################
+		tok=self.lex()
+		print tok
+		if(tok!="curlyopen"):
+				print "Error-keep curly open brace"
+				sys.exit(0)
+		#################################
+		self.actor_list()
+		################################
+		tok=self.lex()		
+		print tok
+		if(tok!="curlyclose"):
+			print "Error-keep curly close brace"
+			sys.exit(0)
+		##################################
+		tok=self.lex()
+		#print tok
+		if(tok=="resource"):
+			self.f.seek(-len("resource"),1)
+			self.resource_def()
+
+		elif(tok=="actor"):
+			self.f.seek(-len("actor"),1)
+			self.actor_def()
+		else:
+			self.f.seek(-1,1)
+		
+
+	def actor_list(self):
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-iden"			
+			sys.exit(0)
+		##########################
+		tok=self.lex()
+		print tok
+		if(tok!="colon"):
+			print "Error-colon"			
+			sys.exit(0)
+		##########################
+		self.resource_id()
+		##########################
+		'''tok=self.lex()
+		print tok
+		
+		if(tok!="curlyclose"):
+			print "Error-no curly %d ***********"%self.line_count			
+			sys.exit(0)'''
+		##########################
+		curr_fileptr=self.f.tell()		
+		tok=self.lex()
+		print tok
+		if(tok=="identifier"):
+			self.f.seek(curr_fileptr)
+			self.actor_list()
+		self.f.seek(curr_fileptr)
+
+				
+	def resource_def(self):
 	
 		tok=self.lex()
 		print tok
@@ -130,15 +227,20 @@ class lexer(object):
 		tok=self.lex()
 		print tok
 		if(tok!="semi"):
-			print "Error-no semi"
+			print "Error-no semi %d++++++++++++++++++++"%self.line_count
 			sys.exit(0)
 
 		tok=self.lex()
 		#print tok
 		if(tok=="resource"):
 			self.f.seek(-len("resource"),1)
-			self.p()
-		print "Parsed successfully :D"
+			self.resource_def()
+
+		if(tok=="actor"):
+			self.f.seek(-len("actor"),1)
+			self.actor_def()
+
+
 	def id_list(self):
 	
 		#print "entered the id list"
@@ -158,5 +260,44 @@ class lexer(object):
 			self.id_list()
 		if(tok=="simpleclose" or tok=="curlyclose"):
 			self.f.seek(-1,1)  
-					 							
+	
+
+	def resource_id(self):
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)				 							
+
+		tok=self.lex()
+		print tok
+		if(tok!="dot" ):
+			print "Error-no dot"
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+	
+		if(tok!="simpleopen" and tok!="identifier"):
+			print "Error-define resources properly"
+			sys.exit(0)
+	
+		if(tok=="simpleopen"):
+			self.id_list()
+
+		tok=self.lex()
+		print tok		
+		if(tok!="simpleclose"):
+			print "Error-closebrace"
+			sys.exit(0)
+		
+		tok=self.lex()
+		print tok
+		if(tok!="semi" and tok!="comma"):
+			print "Error-add ; OR ,"
+			sys.exit(0)
+		if(tok=="comma"):
+			self.resource_id()
+
+
 lexer()
