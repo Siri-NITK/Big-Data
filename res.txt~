@@ -13,6 +13,3 @@ actor a2 {
 
 actor A= {a1, a2};
 
-policy p1:
-    allow a3 access r1.f1, r2.f3;
-    allow A access r2.f1;
