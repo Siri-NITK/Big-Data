@@ -1,18 +1,21 @@
 from sets import Set
+
+import pdb
 import re
 import sys
 import os.path
 from sys import argv
 
+listchk = []
 class lexer(object):
-
+      
 	line_count=0
 	file_ptr=16
-	keywords=set(["resource","policy","actor","exists","all","access","allow"])
+	keywords=set(["resource","policy","actor","exists","all","access","allow","in"])
 
 	def __init__(self):
 		print "***************************************************"
-		self.f = open(sys.argv[1], 'r')
+		self.f = open("res.txt", 'r')
 		self.start()
 
 	############################## LEXICAL ANALYSER ########################################	
@@ -33,11 +36,11 @@ class lexer(object):
 			self.f.seek(-1,1)
 		
 	def lex(self):
-	
+	        
 		self.eat_whitespace()
 
 		char =self.f.read(1)
-		print char
+	
 		if (char==""):
 			  return "EOF"
 	
@@ -68,15 +71,20 @@ class lexer(object):
 			return "dot"
 		if(char==":"):
 			return "colon"
-		if(char=="->"):
-			return "arrow"
+		if(char=="-"):
+			char=self.f.read(1)
+			print char
+			if(char==">"):
+				return "arrow"
+			else:
+				pass
 		if(char=="*"):
 			return "asterisk"
 		if(char=="!"):
 			return "exclamation"
 		if(char=="="):
 			return "equals"
-
+                
 	############################# START PARSER #############################################
 
 	def start(self):
@@ -109,34 +117,34 @@ class lexer(object):
 		
 		tok=self.lex()
 		print tok
-		if(tok!="simpleclose" and tok!="comma" and tok!="curlyclose"):
+		if(tok!="simpleclose" and tok!="comma" and tok!="curlyclose" and tok!="access"):
 			print "Error-idlist"
 			sys.exit(0)
 		if(tok=="comma"):
 			self.id_list()
 		if(tok=="simpleclose" or tok=="curlyclose"):
 			self.f.seek(-1,1)  
-	
 
+		if(tok=="access"):
+			self.f.seek(-len("access"),1)
+	
 	def resource_id(self):
 		tok=self.lex()
 		print tok
-		print "1111111111111"
 		if(tok!="identifier"):
 			print "Error-identifier"
 			sys.exit(0)				 							
 
 		tok=self.lex()
 		print tok
-		print "2222222222222222"
 		if(tok!="dot" ):
 			print "Error-no dot"
 			sys.exit(0)
 
 		tok=self.lex()
 		print tok
-		print "333333333333333"
-		if(tok!="simpleopen" and tok!="identifier"):
+	
+		if(tok!="simpleopen" and tok!="identifier" and tok!="asterisk"):
 			print "Error-define resources properly"
 			sys.exit(0)
 	
@@ -144,36 +152,40 @@ class lexer(object):
 			self.id_list()
 
 			tok=self.lex()
-			print tok	
-			print "444444444444"	
+			print tok		
 			if(tok!="simpleclose"):
 				print "Error-closebrace"
 				sys.exit(0)
-
-		else:
-			print "id taaaaaaaaaaaaaaaaakennnnnnnnn"
+						
 			tok=self.lex()
 			print tok
-			print "555555555555"
-			if(tok!="comma" and tok!="semi"):
-				print "Error- no comma or semi******************"
+			if(tok!="semi" and tok!="comma"):
+				print "Error-add ; OR ,"
 				sys.exit(0)
-
+		
 			if(tok=="comma"):
 				self.resource_id()
-			if(tok=="semi"):
-				print "hello"
-				self.f.seek(-1,1)	
+			
+		if(tok=="identifier"):
+			print "Its identifier"
+			tok=self.lex()			
+			print tok
+			if(tok!="comma" and tok!="semi"):
+				print "Error no , or ;"
+				sys.exit(0)
+			if(tok=="comma"):
+				self.resource_id()
 		
-		tok=self.lex()
-		print tok
-		print "666666666666666666"
-		if(tok!="semi" and tok!="comma"):
-			print "Error-add ; OR ,"
-			sys.exit(0)
-		if(tok=="comma"):
-			print "ffffffffffffffffff"
-			self.resource_id()	
+		if(tok=="asterisk"):
+			tok=self.lex()			
+			print tok
+			if(tok!="comma" and tok!="semi"):
+				print "Error no , or ;"
+				sys.exit(0)
+			if(tok=="comma"):
+				self.resource_id()
+		
+
 
 	def actor_list(self):
 		tok=self.lex()
@@ -336,7 +348,7 @@ class lexer(object):
 		tok=self.lex()
 		print tok
 		if(tok!="policy"):
-			print "Start line %d with resource." %self.line_count
+			print "Start line %d with policy." %self.line_count
 			sys.exit(0)			
 		
 		tok=self.lex()
@@ -354,41 +366,181 @@ class lexer(object):
 		tok=self.lex()
 		print tok
 		if(tok=="allow"):	
-			self.f.seek(-len("allow"),1)
+			#self.f.seek(-len("allow"),1)
 			self.policy_1()
+		if(tok=="all"):
+			self.policy_2()
+		if(tok=="exists"):
+			self.policy_3()
+		
 
 	def  policy_1(self):
 
+		print "111111111111111111111111111111111111111" 
+		self.id_list()		
+		
 		tok=self.lex()
 		print tok
-		if(tok!="allow" and tok!="all" and tok!="exists"):
-			print "Error- no allow/all/exists"
+		if(tok!="access"):
+			print "Error-no access"
 			sys.exit(0)
-		 
-		if(tok=="allow"):
-			tok=self.lex()
-			print tok
-			if(tok!="identifier"):
-				print "Error-iden"			
-				sys.exit(0)		
-			
-			tok=self.lex()
-			print tok
-			if(tok!="access"):
-				print "Error-no access"
-				sys.exit(0)
 
-			self.resource_id()
-		
-		'''tok=self.lex()
-		print tok
-		if(tok!="semi"):
-			print "Error-no semi %d"%self.line_count
-			sys.exit(0)'''
+		self.resource_id()
 		
 		tok=self.lex()
 		print tok
 		if(tok=="allow"):	
-			self.f.seek(-len("allow"),1)
-			self.policy_1()						
+			#self.f.seek(-len("allow"),1)
+			self.policy_1()
+		elif(tok=="policy"):
+			self.f.seek(-len("policy"),1)
+			self.policy_def()
+
+	def  policy_2(self):
+
+		print "222222222222222222222222222222222222222"
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-put an id"	
+			sys.exit(0)
+	
+		tok=self.lex()
+		print tok
+		if(tok!="colon"):
+			print "Error-no colon"
+			sys.exit(0)
+					
+		tok=self.lex()
+		print tok
+		if(tok!="actor"):
+			print "Error-no actor :("
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="dot" ):
+			print "Error-no dot"
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-put an id"	
+			sys.exit(0)
+	
+		tok=self.lex()
+		print tok
+		if(tok!="dot"):
+			print "Error-no dot"
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-put an id"	
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="equals"):	
+			print "Error no equals"	
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-put an id"	
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="arrow"):
+			print "Error-no arrow"		
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok=="allow"):
+			self.policy_1()	
+
+	def policy_3(self):
+		
+		print "333333333333333333333333333333333333"
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="in"):
+			print "Error-no in"
+			sys.exit(0)		
+		
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="colon"):	
+			print "Error- no Colon"
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="actor"):
+			print "Error-no actor :("
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="dot"):
+			print "Error-no dot"
+			sys.exit(0)			
+
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="dot"):
+			print "Error-no dot"
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+		
+		tok=self.lex()
+		print tok
+		if(tok!="equals"):	
+			print "Error no equals"	
+			sys.exit(0)
+			
+		tok=self.lex()
+		print tok
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)	
+
+		tok=self.lex()
+		print tok
+		if(tok!="arrow"):
+			print "Error-no arrow"		
+			sys.exit(0)
+
+		tok=self.lex()
+		print tok
+		if(tok=="allow"):
+			self.policy_1()			
 lexer() 

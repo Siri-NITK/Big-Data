@@ -16,3 +16,12 @@ actor A= {a1, a2};
 policy p1:
     allow a3 access r1.f1, r2.f3;
     allow A access r2.f1;
+    allow a2 access r2.*;
+    allow a1, a3 access r1.(f1, f3);
+
+policy p2:
+    all a:actor. a.dept=oncology -> allow a access r2.*;
+policy p3:
+    exists a in G:actor. a.dept=oncology -> allow G access r2.f;
+
+
