@@ -26,7 +26,7 @@ policy p1:
     allow A access r2.f1;
 
 policy p2:
-    all a:actor. a.dept=oncology -> allow a access r2;
+    all a:actor. a.dept=oncology -> allow a access r2.*;
 
 policy p3:
     exists a in G:actor. a.dept=oncology -> allow G access r2.f;
