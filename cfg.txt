@@ -1,0 +1,14 @@
+terminal
+non terminal
+
+Terminal symbols never occur to the left of a rewrite arrow. 
+Non-terminal symbols may occur either to the right or the left of the rewrite arrow .
+
+
+Why are such grammars called `context free'? Because all rules contain only one symbol on the left hand side --- and wherever we see that symbol while doing a derivation, we are free to replace it with the stuff on the right hand side. That is, the `context' in which a symbol on the left hand side of a rule occurs is unimportant --- we can always use the rule to make the rewrite while doing a derivation.
+
+Every derivation corresponds to a parse tree, and every parse tree corresponds to (maybe many) derivations.
+
+We think of CFG rules as telling us which tree structures we have. 
+
+
