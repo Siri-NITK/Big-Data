@@ -22,13 +22,13 @@ class lexer(object):
 	def eat_whitespace(self):
 		char =self.f.read(1)
 		if(char==" "):
-			print "eat white space"
+			
 			while(self.f.read(1)==" "):
-				print "skip space"
+				print ""
 			self.f.seek(-1,1)
 			self.eat_whitespace()
 		elif(char=="\n"):
-			print "skip line"
+			#print "skip line"
 			self.line_count+=1
 			self.eat_whitespace()
 
@@ -91,7 +91,7 @@ class lexer(object):
 
 	def start(self):
 		tok=self.lex()[0]
-		print tok
+		
 		if(tok!="resource" and tok!="actor"):
 			print "Start line %d with resource." %self.line_count
 			sys.exit(0)
@@ -103,24 +103,22 @@ class lexer(object):
 			self.actor_def()
 
 		print "Parsed successfully :D"
-		print "***************************************************"
+
 
 	############################## ID/RESOURCE/ACTOR LIST ##################################
 
 	def id_list(self,lst):
 
-		
+
 		tok,val=self.lex()
-		print tok
-		
+
 		if(tok!="identifier"):
 			print "Error-identifier"
 			sys.exit(0)
 		lst.append(val)
-		
+
 
 		tok=self.lex()[0]
-		print tok
 
 		if(tok!="simpleclose" and tok!="comma" and tok!="curlyclose" and tok!="access"):
 			print "Error-idlist"
@@ -132,99 +130,103 @@ class lexer(object):
 
 		if(tok=="access"):
 			self.f.seek(-len("access"),1)
-		
-		return lst	
 
-	def resource_id(self):
-		tok=self.lex()[0]
-		print tok
+		return lst
+
+	def resource_id(self,rlst):
 
 		lst=[]
 
+		tok,val=self.lex()
 		if(tok!="identifier"):
 			print "Error-identifier"
 			sys.exit(0)
 
+		#print "In resource ID going into rlst %s"%val
+		r=resource(val)
+
+
 		tok=self.lex()[0]
-		print tok
 		if(tok!="dot" ):
 			print "Error-no dot"
 			sys.exit(0)
 
-		tok=self.lex()[0]
-		print tok
+		tok,val=self.lex()
 		if(tok!="simpleopen" and tok!="identifier" and tok!="asterisk"):
 			print "Error-define resources properly"
 			sys.exit(0)
 
 		if(tok=="simpleopen"):
-			lst=self.id_list(lst)
 
-			print 
+			r.fields=self.id_list(lst)
+			print "*******************id list"
+			print r.fields
+			rlst.append(r)
+
 			tok=self.lex()[0]
-			print tok
 			if(tok!="simpleclose"):
 				print "Error-closebrace"
 				sys.exit(0)
 
 			tok=self.lex()[0]
-			print tok
 			if(tok!="semi" and tok!="comma"):
 				print "Error-add ; OR ,"
 				sys.exit(0)
 
 			if(tok=="comma"):
-				self.resource_id()
+				self.resource_id(rlst)
 
 		if(tok=="identifier"):
-			print "Its identifier"
+			r.fields=val
+			print "*******************id list"
+			print r.fields
+			rlst.append(r)
+
 			tok=self.lex()[0]
-			print tok
 			if(tok!="comma" and tok!="semi"):
 				print "Error no , or ;"
 				sys.exit(0)
 			if(tok=="comma"):
-				self.resource_id()
+				self.resource_id(rlst)
 
 		if(tok=="asterisk"):
 			tok=self.lex()[0]
-			print tok
 			if(tok!="comma" and tok!="semi"):
 				print "Error no , or ;"
 				sys.exit(0)
 			if(tok=="comma"):
-				self.resource_id()
+				self.resource_id(rlst)
 
-
+		return rlst
 
 	def actor_list(self):
 		tok=self.lex()[0]
-		print tok
 		if(tok!="identifier"):
 			print "Error-iden"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="colon"):
 			print "Error-colon"
 			sys.exit(0)
 
-		self.resource_id()
+		use_rlst=[]
+		use_rlst=self.resource_id(use_rlst)
+		#print "===================actorlist"
+		#print use_rlst
 
 		curr_fileptr=self.f.tell()
 		tok=self.lex()[0]
-		print tok
 		if(tok=="identifier"):
 			self.f.seek(curr_fileptr)
 			self.actor_list()
 		self.f.seek(curr_fileptr)
 
+		return use_rlst
 	################################# ACTOR DEFINITION #####################################
 
 	def actor_def(self):
 		tok=self.lex()[0]
-		print tok
 
 		lst=[]
 
@@ -233,50 +235,44 @@ class lexer(object):
 			sys.exit(0)
 
 		tok,val=self.lex()
-		print tok
 		if(tok!="identifier"):
 			print "Error-iden"
 			sys.exit(0)
 
-        	actor(val)
+        	a=actor(val)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="curlyopen" and tok!="equals"):
 				print "Error-keep curly open brace or equals"
 				sys.exit(0)
 
 		if(tok=="curlyopen"):
-			self.actor_list()
+			a.fields=self.actor_list()
+			print a.fields
 
 			tok=self.lex()[0]
-			print tok
 			if(tok!="curlyclose"):
 				print "Error-keep curly close brace"
 				sys.exit(0)
 		else:
 			tok=self.lex()[0]
-			print tok
 
 			if(tok!="curlyopen"):
 				print "ERROR- no curly open :( "
 				sys.exit(0)
-			lst=self.id_list(lst)
+			a.fields=self.id_list(lst)
 
 			tok=self.lex()[0]
-			print tok
 			if(tok!="curlyclose"):
 				print "Error-keep curly close brace"
 				sys.exit(0)
 
 			tok=self.lex()[0]
-			print tok
 			if(tok!="semi"):
 				print "Error-no semi %d"%self.line_count
 				sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok=="resource"):
 			self.f.seek(-len("resource"),1)
 			self.resource_def()
@@ -293,16 +289,15 @@ class lexer(object):
 
 	def resource_def(self):
 
-		lst=[]		
-		
+		lst=[]
+
 		tok=self.lex()[0]
-		print tok
 		if(tok!="resource"):
 			print "Start line %d with resource." %self.line_count
 			sys.exit(0)
 
 		tok,val=self.lex()
-		print tok
+		
 		if(tok!="identifier"):
 			print "Error-iden"
 			sys.exit(0)
@@ -310,7 +305,6 @@ class lexer(object):
 		r=resource(val)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok=="equals"):
 			tok=self.lex()[0]
 			if(tok!="curlyopen"):
@@ -318,12 +312,11 @@ class lexer(object):
 				sys.exit(0)
 
 			r.fields=self.id_list(lst)
-			
+
 			print "*******list/**************"
 			print r.fields
 
 			tok=self.lex()[0]
-			print tok
 			if(tok!="curlyclose"):
 				print "Error-keep curly close brace"
 				sys.exit(0)
@@ -336,7 +329,6 @@ class lexer(object):
 			print r.fields
 
 			tok=self.lex()[0]
-			print tok
 			if(tok!="simpleclose"):
 				print "Error-closebrace"
 				sys.exit(0)
@@ -346,13 +338,12 @@ class lexer(object):
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
+
 		if(tok!="semi"):
-			print "Error-no semi %d++++++++++++++++++++"%self.line_count
+			print "Error-no semi %d"%self.line_count
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		#print tok
 		if(tok=="resource"):
 			self.f.seek(-len("resource"),1)
 			self.resource_def()
@@ -370,215 +361,244 @@ class lexer(object):
 	############################## POLICY DEFINITION #######################################
 
 	def policy_def(self):
+		print "In policy definition"
 		tok=self.lex()[0]
-		print tok
 		if(tok!="policy"):
 			print "Start line %d with policy." %self.line_count
 			sys.exit(0)
 
-		tok=self.lex()[0]
-		print tok
+		tok,name=self.lex()
+		print "The policy is %s"%name
+
 		if(tok!="identifier"):
 			print "Error-iden"
 			sys.exit(0)
 
+		p=policy(name)
+
+		print p.policy_1_list		
 		tok=self.lex()[0]
-		print tok
 		if(tok!="colon"):
 			print "Error- no Colon"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok=="allow"):
-			#self.f.seek(-len("allow"),1)
-			self.policy_1()
+			self.policy_1(p)
 		if(tok=="all"):
-			self.policy_2()
+			self.policy_2(p)
 		if(tok=="exists"):
-			self.policy_3()
+			self.policy_3(p)
 
 
-	def  policy_1(self):
+	def  policy_1(self,pol):
 
-		#print "111111111111111111111111111111111111111"
 		lst=[]
 
-		lst=self.id_list(lst)
+		pol_1=policy_type_1(pol)
 
+		pol_1.allow=self.id_list(lst)
+		print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>pol 1 allow<<<"
+		print pol_1.allow
+			
 		tok=self.lex()[0]
-		print tok
 		if(tok!="access"):
 			print "Error-no access"
 			sys.exit(0)
 
-		self.resource_id()
+		lst=[]
+		pol_1.access=self.resource_id(lst)
+		print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>pol 1 access<<<"
+		print pol_1.access
 
-		tok,val=self.lex()
-		print tok
-		if(tok=="allow"):
-			#self.f.seek(-len("allow"),1)
-			self.policy_1()
+		tok=self.lex()[0]
+		if(tok=="allow"):		
+			self.policy_1(pol)
 		elif(tok=="policy"):
 			self.f.seek(-len("policy"),1)
 			self.policy_def()
 		else:
 			pass
 
-	def  policy_2(self):
+	def  policy_2(self,pol):
 
-		#print "222222222222222222222222222222222222222"
+		lst=[]
+		pol_2=policy_type_2(pol)
+		
 		tok=self.lex()[0]
-		print tok
 		if(tok!="identifier"):
 			print "Error-put an id"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="colon"):
 			print "Error-no colon"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="actor"):
 			print "Error-no actor :("
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="dot" ):
 			print "Error-no dot"
 			sys.exit(0)
-
+		
 		tok=self.lex()[0]
-		print tok
 		if(tok!="identifier"):
 			print "Error-put an id"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="dot"):
 			print "Error-no dot"
 			sys.exit(0)
 
-		tok=self.lex()[0]
-		print tok
+		dic_value={}
+
+		# Taking the value of the actor field as the condition
+		tok,val1=self.lex()
 		if(tok!="identifier"):
 			print "Error-put an id"
 			sys.exit(0)
-
+		
 		tok=self.lex()[0]
-		print tok
+		
 		if(tok!="equals"):
 			print "Error no equals"
 			sys.exit(0)
 
-		tok=self.lex()[0]
-		print tok
+		tok,val2=self.lex()
 		if(tok!="identifier"):
 			print "Error-put an id"
 			sys.exit(0)
 
+		dic_value[val1]=val2
+
+		pol_2.actor_field=dic_value
+
+
 		tok=self.lex()[0]
-		print tok
 		if(tok!="arrow"):
 			print "Error-no arrow"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok=="allow"):
-			self.policy_1()
+		
+			print "BEFORE:lets see the pol lists in policy 2"
+			print pol.policy_1_list
 
-	def policy_3(self):
+			self.policy_1(pol)
 
-		print "333333333333333333333333333333333333"
+			print "AFTER:lets see the pol lists in policy 2"
+			print pol.policy_1_list
+
+			
+			
+		
+	def policy_3(self,pol):
+
+		lst=[]
+		pol_3=policy_type_3(pol)
+		
 		tok=self.lex()[0]
-		print tok
 		if(tok!="identifier"):
 			print "Error-identifier"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="in"):
 			print "Error-no in"
 			sys.exit(0)
 
-		tok=self.lex()[0]
-		print tok
+		tok,val=self.lex()
 		if(tok!="identifier"):
 			print "Error-identifier"
 			sys.exit(0)
+		#Type of group
 
+		pol_3.group=val		
+		
 		tok=self.lex()[0]
-		print tok
 		if(tok!="colon"):
 			print "Error- no Colon"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="actor"):
 			print "Error-no actor :("
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="dot"):
 			print "Error-no dot"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="identifier"):
 			print "Error-identifier"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok!="dot"):
 			print "Error-no dot"
 			sys.exit(0)
 
-		tok=self.lex()[0]
-		print tok
+		#An empty dictionary for the dictionary
+		dic={}
+		
+		tok,val1=self.lex()
 		if(tok!="identifier"):
 			print "Error-identifier"
 			sys.exit(0)
-
+		
+		
 		tok=self.lex()[0]
-		print tok
 		if(tok!="equals"):
 			print "Error no equals"
 			sys.exit(0)
 
-		tok=self.lex()[0]
-		print tok
+		tok,val2=self.lex()
 		if(tok!="identifier"):
 			print "Error-identifier"
 			sys.exit(0)
 
+		dic[val1]=val2
+		
+		pol_3.condition=dic		
+		
 		tok=self.lex()[0]
-		print tok
 		if(tok!="arrow"):
 			print "Error-no arrow"
 			sys.exit(0)
 
 		tok=self.lex()[0]
-		print tok
 		if(tok=="allow"):
-			self.policy_1()
-############################################################
+			print "BEFORE:lets see the pol lists in policy 2"
+			print pol.policy_1_list
+
+			self.policy_1(pol)
+
+			print "AFTER:lets see the pol lists in policy 2"
+			print pol.policy_1_list
+			
+
+#--------------------------------------------------------------------------------------------------------------------------------------------
 lexer()
+#print ', '.join(i.id for i in actors_list)
+#print actors_list[2].fields[1]
+#print policies_list[0].policy_1_list[0].access[1].id
+#print policies_list[1].policy_2_list[0].pol1.allow
 
-
-print ', '.join(i.id for i in actors_list)
-
-for i in resources_list:
-	print i.fields
+print "------------------------------------------------"
+print ','.join(i.id for i in policies_list)
+print policies_list[0].policy_1_list[3].access
+print "------------------------------------------------"
+print policies_list[1].policy_2_list[0]
+print policies_list[1].policy_1_list
+print "------------------------------------------------"
+print policies_list[2].policy_3_list[0].condition
 
 
