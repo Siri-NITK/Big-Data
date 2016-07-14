@@ -84,7 +84,7 @@
    
 ** Design of grammar for the language
 
-  The BNF grammar is defined [[ Big-Data/spec_grammar.txt ][here]] 
+  The BNF grammar is defined [[ ./spec_grammar.txt ][here]] 
 
 ** Lexical Analysis 
   
