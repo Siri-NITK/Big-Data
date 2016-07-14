@@ -2,4 +2,644 @@
 #+Author: Srivalya Elluru
 #+Date: June 9, 2016
 
-*                     Summer Internship 2016
+* Abstract
+  In the project proposal is put forward to address the big data requirements of the Manipal University, the project I have done takes care of the privacy, security, scalability and ease of use of requirements and data.
+    A new specification language is designed in which data resources, actors who want to get access to the data and the security policies are initialized.
+    In the validation process, if the actors requirements satisy the security policies stated a VM is instantiated and activites within these VM can access shared data services.
+    By harnessing virtualization technology powerful security and privacy protocols can be enforced.
+
+* Motivation
+  To Design a language which takes care of the data security and is simple and easy to comprehend for non-technical person to use belonging to any department, institute or a research unit.  
+
+* Introduction
+  
+  The field of big data science is all about discovering insights from huge data. The insights drawn using the historic data, drives solution in timely manner. 
+  In numerous departments, educational institutions, research units etc have large collection of data. This data should be managed by different organizational units with unique privacy and security requirements.
+  A project proposal is put forward a three-pronged approach to address the big data requirements of the Manipal University.
+  First is to build the capacity for building big data. Second is to demostrate how data science is applied and the third is to
+  engineer a next generation architecture integrating the disperate data sets, while taking care of the privacy, security and ease of use of requirements.
+  
+  To provide a security and privacy a new specification language is designed which specially designed for non-technical people as it is simple to understand.
+  In this language data resources, actors who want to get access to the data and the security policies are initialized.
+  In the validation process, if the actors requirements satisy the security policies stated a VM is instantiated and activites within these VM can access shared data services.
+
+* The specification language design
+
+** Way to define resources(data)
+
+  #+BEGIN_SRC command
+  resource <name>.(<fields>);
+  resource R = {r1, r2};
+  #+END_SRC
+  
+  Eg: resource r1.(f1,f3);
+  resource is a keyword.
+  r1 is the name of the resource and f1 and f3 are supposed to be the names of the fields(sub parts of the resource).
+  R is the name of the resource and is group of resources r1 and r2.
+  
+** Way to define actors
+
+  #+BEGIN_SRC command
+  actor a1
+  {
+    uses: r1.(f1, f2, f4), r2.(f3, f7,f5);
+  }   
+  
+  actor A= {a1, a2};
+  
+  #+END_SRC
+
+  "actor" and "uses" are keywords. 
+  a1 is the name of the actor and the rest is the resources the actor wants to use.
+  A  is the name of the actor and is a group of actors a1 and a2.
+  
+** way to define policies
+
+ #+BEGIN_SRC command
+  policy p1:
+    allow a1, a3 access r1.(f1, f3);
+  
+  policy p2:
+    all a:actor. a.dept=accounts -> allow a access r2.*;
+    
+  policy p3:
+    exists a in G:actor. a.dept=accounts -> allow G access r2.f;
+  #+END_SRC
+
+  "pocily" is a keyword. 
+  P1, p2, p3 are the names of the policies.
+  
+  what policy p1 means-
+    It allows actors a1 and a3 to access to only fields f1 and f2 of resource r1.
+    
+  what policy p2 means-
+    All actors belonging to the accounts department gets access to all(means *) fields of resource r2.
+    
+  what policy p3 means-
+    If any atleast one actor in the group G belongs to accounts department give access to the field f of resource r2 to the whole group.
+    
+* Steps to design a language
+
+   [[./images/compiler_design.png]]
+   
+** Design of grammar for the language
+
+  The BNF grammar is defined [[ Big-Data/spec_grammar.txt ][here]] 
+
+** Lexical Analysis 
+  
+  + Lexical analysis is the first phase of a compiler. 
+  + It takes the modified source code from language preprocessors that are written in the form of sentences. The lexical analyzer breaks these syntaxes into a series of tokens, by removing any whitespace or comments in the source code.
+  + Any token invalid, it generates an error. 
+  + A function called lex() return the next expected token.
+  
+  #+BEGIN_SRC command
+  def lex(self):
+
+		self.eat_whitespace()
+
+		char =self.f.read(1)
+
+		if (char==""):
+			  return "EOF",char
+
+		if (char.isalpha()):
+			s=""
+			while(char.isalnum()):
+	    			s = "".join((s, char))
+	    			char=self.f.read(1)
+
+			self.f.seek(-1,1)
+			if s in self.keywords:
+				return s,"keyword"
+			return "identifier",s
+
+		if(char==";"):
+			return "semi",char
+		if(char=="("):
+			return "simpleopen",char
+		if(char==")"):
+			return "simpleclose",char
+		if(char=="{"):
+			return "curlyopen",char
+		if(char=="}"):
+			return "curlyclose",char
+		if(char==","):
+			return "comma",char
+		if(char=="."):
+			return "dot",char
+		if(char==":"):
+			return "colon",char
+		if(char=="-"):
+			char=self.f.read(1)
+			print char
+			if(char==">"):
+				return "arrow",char
+			else:
+				pass
+		if(char=="*"):
+			return "asterisk",char
+		if(char=="!"):
+			return "exclamation",char
+		if(char=="="):
+			return "equals",char
+  #+END_SRC
+  
+  [[./image/leaxical_ana.png]]
+  
+** LL(1) Parser
+  + Checks the syntax of the source code. It should follow the rules of the context free grammar defined.
+  
+  #+BEGIN_SRC command
+    
+    ############################# START PARSER #############################################
+
+	def start(self):
+		tok=self.lex()[0]
+		
+		if(tok!="resource" and tok!="actor"):
+			print "Start line %d with resource." %self.line_count
+			sys.exit(0)
+
+		if(tok=="resource"):
+			self.f.seek(-len("resource"),1)
+			self.resource_def()
+		else:
+			self.actor_def()
+
+
+	############################## ID/RESOURCE/ACTOR LIST ##################################
+
+	def id_list(self,lst):
+
+
+		tok,val=self.lex()
+
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+		lst.append(val)
+
+
+		tok=self.lex()[0]
+
+		if(tok!="simpleclose" and tok!="comma" and tok!="curlyclose" and tok!="access"):
+			print "Error-idlist"
+			sys.exit(0)
+		if(tok=="comma"):
+			self.id_list(lst)
+		if(tok=="simpleclose" or tok=="curlyclose"):
+			self.f.seek(-1,1)
+
+		if(tok=="access"):
+			self.f.seek(-len("access"),1)
+
+		return lst
+
+	def resource_id(self,rlst):
+
+		lst=[]
+
+		tok,val=self.lex()
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+
+		#print "In resource ID going into rlst %s"%val
+		r=resource(val)
+
+
+		tok=self.lex()[0]
+		if(tok!="dot" ):
+			print "Error-no dot"
+			sys.exit(0)
+
+		tok,val=self.lex()
+		if(tok!="simpleopen" and tok!="identifier" and tok!="asterisk"):
+			print "Error-define resources properly"
+			sys.exit(0)
+
+		if(tok=="simpleopen"):
+
+			r.fields=self.id_list(lst)
+			
+			rlst.append(r)
+
+			tok=self.lex()[0]
+			if(tok!="simpleclose"):
+				print "Error-closebrace"
+				sys.exit(0)
+
+			tok=self.lex()[0]
+			if(tok!="semi" and tok!="comma"):
+				print "Error-add ; OR ,"
+				sys.exit(0)
+
+			if(tok=="comma"):
+				self.resource_id(rlst)
+
+		if(tok=="identifier"):
+			r.fields=val
+			rlst.append(r)
+
+			tok=self.lex()[0]
+			if(tok!="comma" and tok!="semi"):
+				print "Error no , or ;"
+				sys.exit(0)
+			if(tok=="comma"):
+				self.resource_id(rlst)
+
+		if(tok=="asterisk"):
+			tok=self.lex()[0]
+			if(tok!="comma" and tok!="semi"):
+				print "Error no , or ;"
+				sys.exit(0)
+			if(tok=="comma"):
+				self.resource_id(rlst)
+
+		return rlst
+
+	def actor_list(self):
+		tok=self.lex()[0]
+		if(tok!="identifier"):
+			print "Error-iden"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="colon"):
+			print "Error-colon"
+			sys.exit(0)
+
+		use_rlst=[]
+		use_rlst=self.resource_id(use_rlst)
+		
+		curr_fileptr=self.f.tell()
+		tok=self.lex()[0]
+		if(tok=="identifier"):
+			self.f.seek(curr_fileptr)
+			self.actor_list()
+		self.f.seek(curr_fileptr)
+
+		return use_rlst
+	################################# ACTOR DEFINITION #####################################
+
+	def actor_def(self):
+		tok=self.lex()[0]
+
+		lst=[]
+
+		if(tok!="actor"):
+			print "Start line %d with resource." %self.line_count
+			sys.exit(0)
+
+		tok,val=self.lex()
+		if(tok!="identifier"):
+			print "Error-iden"
+			sys.exit(0)
+
+        	a=actor(val)
+
+		tok=self.lex()[0]
+		if(tok!="curlyopen" and tok!="equals"):
+				print "Error-keep curly open brace or equals"
+				sys.exit(0)
+
+		if(tok=="curlyopen"):
+			a.fields=self.actor_list()
+			print a.fields
+
+			tok=self.lex()[0]
+			if(tok!="curlyclose"):
+				print "Error-keep curly close brace"
+				sys.exit(0)
+		else:
+			tok=self.lex()[0]
+
+			if(tok!="curlyopen"):
+				print "ERROR- no curly open :( "
+				sys.exit(0)
+			a.fields=self.id_list(lst)
+
+			tok=self.lex()[0]
+			if(tok!="curlyclose"):
+				print "Error-keep curly close brace"
+				sys.exit(0)
+
+			tok=self.lex()[0]
+			if(tok!="semi"):
+				print "Error-no semi %d"%self.line_count
+				sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok=="resource"):
+			self.f.seek(-len("resource"),1)
+			self.resource_def()
+
+		elif(tok=="actor"):
+			self.f.seek(-len("actor"),1)
+			self.actor_def()
+		elif(tok=="policy"):
+			self.f.seek(-len("resource"),1)
+			self.policy_def()
+		else:
+			self.f.seek(-1,1)
+	############################## RESOURCE DEFINITION #####################################
+
+	def resource_def(self):
+
+		lst=[]
+
+		tok=self.lex()[0]
+		if(tok!="resource"):
+			print "Start line %d with resource." %self.line_count
+			sys.exit(0)
+
+		tok,val=self.lex()
+		
+		if(tok!="identifier"):
+			print "Error-iden"
+			sys.exit(0)
+
+		r=resource(val)
+
+		tok=self.lex()[0]
+		if(tok=="equals"):
+			tok=self.lex()[0]
+			if(tok!="curlyopen"):
+				print "Error-keep curly open brace"
+				sys.exit(0)
+
+			r.fields=self.id_list(lst)
+
+			tok=self.lex()[0]
+			if(tok!="curlyclose"):
+				print "Error-keep curly close brace"
+				sys.exit(0)
+
+		elif(tok=="simpleopen"):
+
+			r.fields=self.id_list(lst)
+
+			tok=self.lex()[0]
+			if(tok!="simpleclose"):
+				print "Error-closebrace"
+				sys.exit(0)
+
+		else:
+			print "put either equals or simple brace"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+
+		if(tok!="semi"):
+			print "Error-no semi %d"%self.line_count
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok=="resource"):
+			self.f.seek(-len("resource"),1)
+			self.resource_def()
+
+		elif(tok=="actor"):
+			self.f.seek(-len("actor"),1)
+			self.actor_def()
+		elif(tok=="policy"):
+			self.f.seek(-len("resource"),1)
+			self.policy_def()
+		else:
+			self.f.seek(-1,1)
+
+
+	############################## POLICY DEFINITION #######################################
+
+	def policy_def(self):
+		
+		tok=self.lex()[0]
+		if(tok!="policy"):
+			print "Start line %d with policy." %self.line_count
+			sys.exit(0)
+
+		tok,name=self.lex()
+		
+
+		if(tok!="identifier"):
+			print "Error-iden"
+			sys.exit(0)
+
+		p=policy(name)
+	
+		tok=self.lex()[0]
+		if(tok!="colon"):
+			print "Error- no Colon"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok=="allow"):
+			self.policy_1(p)
+		if(tok=="all"):
+			self.policy_2(p)
+		if(tok=="exists"):
+			self.policy_3(p)
+
+
+	def  policy_1(self,pol):
+
+		lst=[]
+
+		pol_1=policy_type_1(pol)
+
+		pol_1.allow=self.id_list(lst)
+		
+		tok=self.lex()[0]
+		if(tok!="access"):
+			print "Error-no access"
+			sys.exit(0)
+
+		lst=[]
+		pol_1.access=self.resource_id(lst)
+		
+		tok=self.lex()[0]
+		if(tok=="allow"):		
+			self.policy_1(pol)
+		elif(tok=="policy"):
+			self.f.seek(-len("policy"),1)
+			self.policy_def()
+		else:
+			pass
+
+	def  policy_2(self,pol):
+
+		lst=[]
+		pol_2=policy_type_2(pol)
+		
+		tok=self.lex()[0]
+		if(tok!="identifier"):
+			print "Error-put an id"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="colon"):
+			print "Error-no colon"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="actor"):
+			print "Error-no actor :("
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="dot" ):
+			print "Error-no dot"
+			sys.exit(0)
+		
+		tok=self.lex()[0]
+		if(tok!="identifier"):
+			print "Error-put an id"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="dot"):
+			print "Error-no dot"
+			sys.exit(0)
+
+		dic_value={}
+
+		# Taking the value of the actor field as the condition
+		tok,val1=self.lex()
+		if(tok!="identifier"):
+			print "Error-put an id"
+			sys.exit(0)
+		
+		tok=self.lex()[0]
+		
+		if(tok!="equals"):
+			print "Error no equals"
+			sys.exit(0)
+
+		tok,val2=self.lex()
+		if(tok!="identifier"):
+			print "Error-put an id"
+			sys.exit(0)
+
+		dic_value[val1]=val2
+
+		pol_2.actor_field=dic_value
+
+
+		tok=self.lex()[0]
+		if(tok!="arrow"):
+			print "Error-no arrow"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok=="allow"):
+		
+			self.policy_1(pol)
+			
+		
+	def policy_3(self,pol):
+
+		lst=[]
+		pol_3=policy_type_3(pol)
+		
+		tok=self.lex()[0]
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="in"):
+			print "Error-no in"
+			sys.exit(0)
+
+		tok,val=self.lex()
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+		#Type of group
+
+		pol_3.group=val		
+		
+		tok=self.lex()[0]
+		if(tok!="colon"):
+			print "Error- no Colon"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="actor"):
+			print "Error-no actor :("
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="dot"):
+			print "Error-no dot"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok!="dot"):
+			print "Error-no dot"
+			sys.exit(0)
+
+		#An empty dictionary for the dictionary
+		dic={}
+		
+		tok,val1=self.lex()
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+		
+		
+		tok=self.lex()[0]
+		if(tok!="equals"):
+			print "Error no equals"
+			sys.exit(0)
+
+		tok,val2=self.lex()
+		if(tok!="identifier"):
+			print "Error-identifier"
+			sys.exit(0)
+
+		dic[val1]=val2
+		
+		pol_3.condition=dic		
+		
+		tok=self.lex()[0]
+		if(tok!="arrow"):
+			print "Error-no arrow"
+			sys.exit(0)
+
+		tok=self.lex()[0]
+		if(tok=="allow"):
+			
+			self.policy_1(pol)
+
+  #+END_SRC
+  
+** Abstract syntax Tree
+
+  It is implemented using lists.
+  
+  #+BEGIN_SRC command
+  print ', '.join(i.id for i in actors_list)
+  print ', '.join(i.id for i in resources_list)
+  print ', '.join(i.id for i in policies_list)
+  #+END_SRC
+  
+  The output would be:
+  
+  #+BEGIN_SRC command
+  parsed successfully
+  a1, a2, A
+  ['R', 'r1', 'r2']
+  p1, p2, p3
+  #+END_SRC
+  
+  
+  
+
+  
