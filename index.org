@@ -2,6 +2,12 @@
 #+Author: Srivalya Elluru
 #+Date: June 9, 2016
 
+* Acknowledgement 
+   I hereby declare that the project work entitled “Big-Data” submitted to VLEAD, is a record of an original work done by me
+   under the guidance of Prof.Devi Preasad, and this project work is submitted in the partial fulfillment of the requirements
+   for Virtual Labs, Summer Internship programme, IIIT-H 2016. And I would also thank Dr.Venkatesh Chopella and the all the
+   VLEAD staff for their support and guidance.
+   
 * Abstract
   In the project proposal is put forward to address the big data requirements of the Manipal University, the project I have done takes care of the privacy, security, scalability and ease of use of requirements and data.
     A new specification language is designed in which data resources, actors who want to get access to the data and the security policies are initialized.
@@ -84,7 +90,7 @@
    
 ** Design of grammar for the language
 
-  The BNF grammar is defined [[ spec_grammar.txt ][here]] 
+  The BNF grammar is defined [[https://github.com/Siri-NITK/Big-Data/blob/master/spec_grammar.txt][here]] 
 
 ** Lexical Analysis 
   
@@ -722,5 +728,10 @@ class policy_type_3:
  
    #+END_SRC
   
+* References
++ To understand basic compiler design 
+  http://www.tutorialspoint.com/compiler_design/compiler_design_syntax_analysis.htm
++ https://projects.csail.mit.edu/jeeves/talks.php
++ To correct small errors http://stackoverflow.com/
 
   
