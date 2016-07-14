@@ -75,7 +75,7 @@ class lexer(object):
 			return "colon",char
 		if(char=="-"):
 			char=self.f.read(1)
-			print char
+			
 			if(char==">"):
 				return "arrow",char
 			else:
@@ -101,8 +101,6 @@ class lexer(object):
 			self.resource_def()
 		else:
 			self.actor_def()
-
-		print "Parsed successfully :D"
 
 
 	############################## ID/RESOURCE/ACTOR LIST ##################################
@@ -159,8 +157,7 @@ class lexer(object):
 		if(tok=="simpleopen"):
 
 			r.fields=self.id_list(lst)
-			print "*******************id list"
-			print r.fields
+			
 			rlst.append(r)
 
 			tok=self.lex()[0]
@@ -178,8 +175,6 @@ class lexer(object):
 
 		if(tok=="identifier"):
 			r.fields=val
-			print "*******************id list"
-			print r.fields
 			rlst.append(r)
 
 			tok=self.lex()[0]
@@ -212,9 +207,7 @@ class lexer(object):
 
 		use_rlst=[]
 		use_rlst=self.resource_id(use_rlst)
-		#print "===================actorlist"
-		#print use_rlst
-
+		
 		curr_fileptr=self.f.tell()
 		tok=self.lex()[0]
 		if(tok=="identifier"):
@@ -313,9 +306,6 @@ class lexer(object):
 
 			r.fields=self.id_list(lst)
 
-			print "*******list/**************"
-			print r.fields
-
 			tok=self.lex()[0]
 			if(tok!="curlyclose"):
 				print "Error-keep curly close brace"
@@ -324,9 +314,6 @@ class lexer(object):
 		elif(tok=="simpleopen"):
 
 			r.fields=self.id_list(lst)
-
-			print "*******list/**************"
-			print r.fields
 
 			tok=self.lex()[0]
 			if(tok!="simpleclose"):
@@ -361,22 +348,21 @@ class lexer(object):
 	############################## POLICY DEFINITION #######################################
 
 	def policy_def(self):
-		print "In policy definition"
+		
 		tok=self.lex()[0]
 		if(tok!="policy"):
 			print "Start line %d with policy." %self.line_count
 			sys.exit(0)
 
 		tok,name=self.lex()
-		print "The policy is %s"%name
+		
 
 		if(tok!="identifier"):
 			print "Error-iden"
 			sys.exit(0)
 
 		p=policy(name)
-
-		print p.policy_1_list		
+	
 		tok=self.lex()[0]
 		if(tok!="colon"):
 			print "Error- no Colon"
@@ -398,9 +384,7 @@ class lexer(object):
 		pol_1=policy_type_1(pol)
 
 		pol_1.allow=self.id_list(lst)
-		print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>pol 1 allow<<<"
-		print pol_1.allow
-			
+		
 		tok=self.lex()[0]
 		if(tok!="access"):
 			print "Error-no access"
@@ -408,9 +392,7 @@ class lexer(object):
 
 		lst=[]
 		pol_1.access=self.resource_id(lst)
-		print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>pol 1 access<<<"
-		print pol_1.access
-
+		
 		tok=self.lex()[0]
 		if(tok=="allow"):		
 			self.policy_1(pol)
@@ -487,15 +469,7 @@ class lexer(object):
 		tok=self.lex()[0]
 		if(tok=="allow"):
 		
-			print "BEFORE:lets see the pol lists in policy 2"
-			print pol.policy_1_list
-
 			self.policy_1(pol)
-
-			print "AFTER:lets see the pol lists in policy 2"
-			print pol.policy_1_list
-
-			
 			
 		
 	def policy_3(self,pol):
@@ -576,29 +550,27 @@ class lexer(object):
 
 		tok=self.lex()[0]
 		if(tok=="allow"):
-			print "BEFORE:lets see the pol lists in policy 2"
-			print pol.policy_1_list
-
+			
 			self.policy_1(pol)
 
-			print "AFTER:lets see the pol lists in policy 2"
-			print pol.policy_1_list
-			
 
 #--------------------------------------------------------------------------------------------------------------------------------------------
 lexer()
-#print ', '.join(i.id for i in actors_list)
+print ', '.join(i.id for i in actors_list)
+print list(set(i.id for i in resources_list))
+#print ', '.join(i.id for i in resources_list)
+print ', '.join(i.id for i in policies_list)
 #print actors_list[2].fields[1]
 #print policies_list[0].policy_1_list[0].access[1].id
 #print policies_list[1].policy_2_list[0].pol1.allow
 
-print "------------------------------------------------"
-print ','.join(i.id for i in policies_list)
-print policies_list[0].policy_1_list[3].access
-print "------------------------------------------------"
-print policies_list[1].policy_2_list[0]
-print policies_list[1].policy_1_list
-print "------------------------------------------------"
-print policies_list[2].policy_3_list[0].condition
+#print "------------------------------------------------"
+#print ','.join(i.id for i in policies_list)
+#print policies_list[0].policy_1_list[3].access
+#print "------------------------------------------------"
+#print policies_list[1].policy_2_list[0]
+#print policies_list[1].policy_1_list
+#print "------------------------------------------------"
+#print policies_list[2].policy_3_list[0].condition
 
 
