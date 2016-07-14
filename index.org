@@ -145,7 +145,7 @@
 			return "equals",char
   #+END_SRC
   
-  [[./images/leaxical_ana.png]]
+  [[./images/lexical_ana.png]]
   
 ** LL(1) Parser
   + Checks the syntax of the source code. It should follow the rules of the context free grammar defined.
