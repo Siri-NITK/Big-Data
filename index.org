@@ -80,7 +80,7 @@
     
 * Steps to design a language
 
-   [[./images/compiler_design.png]]
+   [[./images/compiler_design.jpg]]
    
 ** Design of grammar for the language
 
@@ -145,7 +145,7 @@
 			return "equals",char
   #+END_SRC
   
-  [[./image/leaxical_ana.png]]
+  [[./images/leaxical_ana.png]]
   
 ** LL(1) Parser
   + Checks the syntax of the source code. It should follow the rules of the context free grammar defined.
